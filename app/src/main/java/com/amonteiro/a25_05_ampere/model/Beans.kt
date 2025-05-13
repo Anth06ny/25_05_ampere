@@ -1,6 +1,9 @@
 package com.amonteiro.a25_05_ampere.model
 
 
+
+data class PictureBean(val id:Int, val url: String, val title: String, val longText: String)
+
 class RandomName {
     private val list = arrayListOf("Toto", "tata", "bob")
     private var oldValue = ""
@@ -54,6 +57,11 @@ class ThermometerBean(val min: Int = 0, val max: Int = 100, value: Int = 0) {
         fun getCelsiusThermometer() = ThermometerBean(-30, 50, 0)
         fun getFahrenheitThermometer() = ThermometerBean(20, 120, 32)
     }
+
+    override fun toString(): String {
+        return "ThermometerBean(value=$value)"
+    }
+
 
 }
 

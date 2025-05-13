@@ -1,13 +1,19 @@
 package com.amonteiro.a25_05_ampere.model
 
 import com.google.gson.Gson
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import java.io.InputStreamReader
 
 //Utilisation
-fun main() {
+suspend fun main() {
     //Lance la requête et met le corps de la réponse dans html
 //    var html: String = WeatherRepository.sendGet("https://www.google.fr")
 //    //Affiche l'HTML
@@ -23,16 +29,26 @@ fun main() {
 //        )
 //    }
 
-    for (weather in WeatherRepository.loadWeathers("nice")) {
-        println(
-            """
-            Il fait ${weather.main.temp}° à ${weather.name} (id=${weather.id}) avec un vent de ${weather.wind.speed} m/s
-            -Description : ${weather.weather.firstOrNull()?.description ?: "-"}
-            -Icône : ${weather.weather.firstOrNull()?.icon ?: "-"}
-            
-            
-        """.trimIndent()
-        )
+//    for (weather in WeatherRepository.loadWeathers("nice")) {
+//        println(
+//            """
+//            Il fait ${weather.main.temp}° à ${weather.name} (id=${weather.id}) avec un vent de ${weather.wind.speed} m/s
+//            -Description : ${weather.weather.firstOrNull()?.description ?: "-"}
+//            -Icône : ${weather.weather.firstOrNull()?.icon ?: "-"}
+//        """.trimIndent()
+//        )
+//    }
+
+    runBlocking {
+        launch {
+            WeatherRepository.getWeathers("toulouse", "nice", "fghjkl", "",  "marseille")
+                .filter { it.wind.speed < 10 }
+                .catch { println("Erreur : ${it.message}" ) }
+                .collect {
+                    println(it)
+                }
+
+        }
     }
 
 
@@ -45,8 +61,21 @@ object WeatherRepository {
 
     fun loadWeathers(cityName: String): List<WeatherBean> {
         val json = sendGet("https://api.openweathermap.org/data/2.5/find?q=$cityName&appid=b80967f0a6bd10d23e44848547b26550&units=metric&lang=fr")
+
         val weatherAPIResult = gson.fromJson(json, WeatherAPIResult::class.java)
-        return weatherAPIResult.list
+        return weatherAPIResult.list.onEach {
+            it.weather.forEach {
+                it.icon = "https://openweathermap.org/img/wn/${it.icon}@4x.png"
+            }
+        }
+    }
+
+
+    fun getWeathers(vararg cities: String) = flow {
+        cities.forEach {
+            loadWeathers(it).forEach { emit(it) }
+            delay(1000)
+        }
     }
 
     fun loadWeathersOpti(cityName: String): List<WeatherBean> =
@@ -103,7 +132,7 @@ object WeatherRepository {
 /* -------------------------------- */
 data class WeatherAPIResult(val list: List<WeatherBean>)
 data class WeatherBean(
-    val id: Long, val name: String, var main: TempBean,
+    val id: Int, val name: String, var main: TempBean,
     var weather: List<DescriptionBean>,
     var wind: Wind
 )

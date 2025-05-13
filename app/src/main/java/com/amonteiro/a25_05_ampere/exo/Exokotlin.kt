@@ -10,6 +10,9 @@ var v2: String? = "toto"
 
 fun main() {
 
+    repeat(5) {
+
+    }
 
 
     println("helloworld")
