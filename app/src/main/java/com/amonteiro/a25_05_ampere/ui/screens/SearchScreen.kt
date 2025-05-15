@@ -1,5 +1,6 @@
 package com.amonteiro.a25_05_ampere.ui.screens
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,12 +15,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardActionScope
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -29,17 +34,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.amonteiro.a25_05_ampere.R
 import com.amonteiro.a25_05_ampere.model.PictureBean
+import com.amonteiro.a25_05_ampere.ui.MyError
 import com.amonteiro.a25_05_ampere.ui.theme._25_05_ampereTheme
 import com.amonteiro.a25_05_ampere.viewmodel.MainViewModel
 import com.amonteiro.a25_05_ampere.viewmodel.MainViewModelPreview
@@ -61,6 +69,26 @@ fun SearchScreenPreview() {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
 
             val mainViewModel = MainViewModelPreview()
+            mainViewModel.loadFakeData(false, "")
+
+            SearchScreen(modifier = Modifier.padding(innerPadding), mainViewModel= mainViewModel)
+        }
+    }
+}
+
+@Preview(showBackground = true, showSystemUi = true)
+@Preview(
+    showBackground = true,
+    showSystemUi = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES or android.content.res.Configuration.UI_MODE_TYPE_NORMAL,
+    locale = "fr"
+)
+@Composable
+fun SearchScreenAllDataPreview() {
+    _25_05_ampereTheme {
+        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+
+            val mainViewModel = MainViewModelPreview()
             mainViewModel.loadFakeData(true, "Une erreur")
 
             SearchScreen(modifier = Modifier.padding(innerPadding), mainViewModel= mainViewModel)
@@ -72,16 +100,27 @@ fun SearchScreenPreview() {
 @Composable
 fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = viewModel ()) {
 
-    var searchText by remember { mutableStateOf("") }
+    var searchText by rememberSaveable { mutableStateOf("") }
+
+    val list = mainViewModel.dataList.collectAsStateWithLifecycle().value//.filter { it.title.contains(searchText) }
+
+    val runInProgress by mainViewModel.runInProgress.collectAsStateWithLifecycle()
+    val errorMessage by mainViewModel.errorMessage.collectAsStateWithLifecycle()
+
 
     Column(modifier = modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
 
         SearchBar(
             searchText = searchText,
-            onValueChange = { searchText = it}
+            onValueChange = { searchText = it},
+            onSearch = { mainViewModel.loadWeathers(searchText) }
         )
 
-        val list = mainViewModel.dataList.collectAsStateWithLifecycle().value.filter { it.title.contains(searchText) }
+        MyError(errorMessage= errorMessage)
+
+        AnimatedVisibility(visible = runInProgress){
+            CircularProgressIndicator()
+        }
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.weight(1f)) {
             items(list.size) {
@@ -104,7 +143,7 @@ fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = v
                 Text(stringResource(R.string.clear_filter))
             }
             Button(
-                onClick = { /* Do something! */ },
+                onClick = { mainViewModel.loadWeathers(searchText) },
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding
             ) {
                 Icon(
@@ -120,7 +159,7 @@ fun SearchScreen(modifier: Modifier = Modifier, mainViewModel: MainViewModel = v
 }
 
 @Composable
-fun SearchBar(modifier: Modifier = Modifier, searchText: String, onValueChange: (String) -> Unit) {
+fun SearchBar(modifier: Modifier = Modifier, searchText: String, onValueChange: (String) -> Unit,  onSearch: (KeyboardActionScope.() -> Unit)? = null) {
     TextField(
         value = searchText, //Valeur affichée
         onValueChange = onValueChange, //Nouveau texte entrée
@@ -141,8 +180,8 @@ fun SearchBar(modifier: Modifier = Modifier, searchText: String, onValueChange: 
         //Text("Recherche")
         //},
 
-        //keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Définir le bouton "Entrée" comme action de recherche
-        //keyboardActions = KeyboardActions(onSearch = {onSearchAction()}), // Déclenche l'action définie
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search), // Définir le bouton "Entrée" comme action de recherche
+        keyboardActions = KeyboardActions(onSearch = onSearch), // Déclenche l'action définie
         //Comment le composant doit se placer
         modifier = modifier
             .fillMaxWidth() // Prend toute la largeur

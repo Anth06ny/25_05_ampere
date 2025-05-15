@@ -35,8 +35,6 @@ open class MainViewModel(private val dispatcher: CoroutineDispatcher = Dispatche
     val errorMessage = MutableStateFlow("")
 
 
-
-
     open fun loadWeathers(cityName: String) {
 
         runInProgress.value = true
