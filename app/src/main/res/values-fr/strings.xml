@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">25_05_ampere</string>
+    <string name="bt_load">Chargement</string>
+    <string name="clear_filter">Effacer filtre</string>
+</resources>

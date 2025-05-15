@@ -41,6 +41,13 @@ dependencies {
     implementation(libs.okhttp)
     implementation("com.google.code.gson:gson:+")
 
+    testImplementation("io.mockk:mockk:1.+")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.+")
+
+    implementation("com.github.bumptech.glide:compose:1.0.0-beta01")
+
+    implementation (libs.androidx.lifecycle.viewmodel.compose)
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

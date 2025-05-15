@@ -1,8 +1,5 @@
 package com.amonteiro.a25_05_ampere.exo
 
-import android.R.attr.name
-import android.R.attr.text
-import kotlinx.coroutines.runBlocking
 import kotlin.random.Random
 
 var v2: String? = "toto"
@@ -13,7 +10,6 @@ fun main() {
     repeat(5) {
 
     }
-
 
     println("helloworld")
 
